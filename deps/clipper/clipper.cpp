@@ -37,7 +37,7 @@
 * used has retained a Delphi flavour.                                          *
 *                                                                              *
 *******************************************************************************/
-
+#include <iostream>
 #include "clipper.hpp"
 #include <cmath>
 #include <vector>
@@ -677,8 +677,42 @@ void IntersectPoint(TEdge &Edge1, TEdge &Edge2, IntPoint &ip)
     double by2 = Edge2.Bot.y - (Edge2.Bot.x / Edge2.Dx);
     double bx1 = Edge1.Bot.x - (Edge1.Bot.y * Edge1.Dx);
     double bx2 = Edge2.Bot.x - (Edge2.Bot.y * Edge2.Dx);
+    std::int64_t count = 0;
+    int debug_state = 0;
+    bool debug = false;
     do
     {
+        if (count > 200 && debug_state == 0)
+        {
+            debug_state = 1;
+            std::clog << "========================" << std::endl;
+            std::clog << "Starting Debug:" << std::endl;
+            std::clog << "Edge 1:" << std::endl;
+            std::clog << " Bot x: " << Edge1.Bot.x << " y: " << Edge1.Bot.y << std::endl;
+            std::clog << " Top x: " << Edge1.Top.x << " y: " << Edge1.Top.y << std::endl;
+            std::clog << " Dx: " << Edge1.Dx << " bx: " << bx1 << " by: " << by1 << std::endl;
+            std::clog << "Edge 2:" << std::endl;
+            std::clog << " Bot x: " << Edge2.Bot.x << " y: " << Edge2.Bot.y << std::endl;
+            std::clog << " Top x: " << Edge2.Top.x << " y: " << Edge2.Top.y << std::endl;
+            std::clog << " Dx: " << Edge2.Dx << " bx: " << bx2 << " by: " << by2 << std::endl;
+            debug = true;
+        }
+        if (debug_state == 0)
+        {
+            ++count;
+        }
+        else if (debug_state == 5)
+        {
+            ++debug_state;
+            debug = false;
+            std::clog << "Ending Debug:" << std::endl;
+            std::clog << "========================" << std::endl;
+        }
+        else if (debug_state < 5)
+        {
+            std::clog << "Loop " << debug_state << std::endl;
+            std::clog << " IP x: " << ip.x << " y : " << ip.y << std::endl;
+        }
         keep_searching = false;
         cInt y1 = ip.y;
         cInt y2 = ip.y;
@@ -724,23 +758,32 @@ void IntersectPoint(TEdge &Edge1, TEdge &Edge2, IntPoint &ip)
         }
         if (ip.x >= Edge2.Bot.x && x2 < Edge2.Bot.x) x2 = Edge2.Bot.x;
         else if (ip.x <= Edge2.Bot.x && x2 > Edge2.Bot.x) x2 = Edge2.Bot.x;
+        if (debug)
+        {
+            std::clog << " x1: " << x1 << " y1: " << y1 << std::endl;
+            std::clog << " x2: " << x1 << " y2: " << y1 << std::endl;
+        }
         if (y1 > ip.y && y2 > ip.y)
         {
+            if (debug) std::clog << " Situation Y 1" << std::endl;
             ip.y = std::min(y1,y2);
             keep_searching = true;
         }
         else if (y1 < ip.y && y2 < ip.y)
         {
+            if (debug) std::clog << " Situation Y 2" << std::endl;
             ip.y = std::max(y1,y2);
             keep_searching = true;
         } 
         if (x1 > ip.x && x2 > ip.x)
         {
+            if (debug) std::clog << " Situation X 1" << std::endl;
             ip.x = std::min(x1,x2);
             keep_searching = true;
         }
         else if (x1 < ip.x && x2 < ip.x)
         {
+            if (debug) std::clog << " Situation X 2" << std::endl;
             ip.x = std::max(x1,x2);
             keep_searching = true;
         }
