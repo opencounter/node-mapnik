@@ -117,7 +117,7 @@ struct p2p_distance
     p2p_result operator() (mapnik::geometry::line_string<double> const& geom) const
     {
         p2p_result p2p;
-        std::size_t num_points = geom.num_points();
+        std::size_t num_points = geom.size();
         if (num_points > 1)
         {
             for (std::size_t i = 1; i < num_points; ++i)
@@ -152,9 +152,10 @@ struct p2p_distance
     }
     p2p_result operator() (mapnik::geometry::polygon<double> const& geom) const
     {
-        auto const& exterior = geom.exterior_ring;
-        std::size_t num_points = exterior.num_points();
         p2p_result p2p;
+        if (geom.empty()) return p2p;
+        auto const& exterior = geom.front();
+        std::size_t num_points = exterior.size();
         if (num_points < 4)
         {
             return p2p;
@@ -174,7 +175,7 @@ struct p2p_distance
         {
             return p2p;
         }
-        for (auto const& ring :  geom.interior_rings)
+        for (auto const& ring :  geom.interior())
         {
             std::size_t num_interior_points = ring.size();
             if (num_interior_points < 4)
@@ -2358,7 +2359,7 @@ struct geometry_array_visitor
     v8::Local<v8::Array> operator() (mapnik::geometry::polygon<T> const & geom)
     {
         Nan::EscapableHandleScope scope;
-        if (geom.exterior_ring.empty())
+        if (geom.empty() || geom.front().empty())
         {
             // Removed as it should be a bug if a vector tile has reached this point
             // therefore no known tests reach this point
@@ -2366,12 +2367,15 @@ struct geometry_array_visitor
             return scope.Escape(Nan::New<v8::Array>());
             // LCOV_EXCL_STOP
         }
-        v8::Local<v8::Array> arr = Nan::New<v8::Array>(1 + geom.interior_rings.size());
+        v8::Local<v8::Array> arr = Nan::New<v8::Array>(1 + geom.interior().size());
         std::uint32_t c = 0;
-        arr->Set(c++, (*this)(geom.exterior_ring));
-        for (auto const & pt : geom.interior_rings)
+        if (!geom.empty())
         {
-            arr->Set(c++, (*this)(pt));
+            arr->Set(c++, (*this)(geom.front()));
+            for (auto const & pt : geom.interior())
+            {
+                arr->Set(c++, (*this)(pt));
+            }
         }
         return scope.Escape(arr);
     }
