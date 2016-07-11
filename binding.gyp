@@ -63,8 +63,8 @@
       'defines': [
           'MAPNIK_GIT_REVISION="<!@(mapnik-config --git-describe)"',
           'CLIPPER_INTPOINT_IMPL=mapnik::geometry::point<cInt>',
-          'CLIPPER_PATH_IMPL=mapnik::geometry::line_string<cInt>',
-          'CLIPPER_PATHS_IMPL=mapnik::geometry::multi_line_string<cInt>',
+          'CLIPPER_PATH_IMPL=mapnik::geometry::linear_ring<cInt>',
+          'CLIPPER_PATHS_IMPL=std::vector<mapnik::geometry::linear_ring<cInt>>',
           'CLIPPER_IMPL_INCLUDE=<mapnik/geometry.hpp>'
       ],
       'conditions': [
