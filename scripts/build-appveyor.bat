@@ -32,6 +32,9 @@ SET NODE_URL=https://mapbox.s3.amazonaws.com/node-cpp11/v%nodejs_version%/%ARCHP
 ECHO fetching node.exe^: %NODE_URL%
 powershell Invoke-WebRequest "${env:NODE_URL}" -OutFile node.exe
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
+dumpbin /DIRECTIVES node.exe
+dumpbin /DEPENDENTS node.exe
+
 
 :: we replace the existing node.exe with our own
 :: we do this in place so that the npm path logic
@@ -115,7 +118,7 @@ CALL npm install -g node-gyp
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 ECHO ERRORLEVEL^: %ERRORLEVEL%
 
-:: get ready to build agains the mapnik SDK
+:: get ready to build against the mapnik SDK
 SET MAPNIK_SDK=%CD%\mapnik-sdk
 SET PATH=%MAPNIK_SDK%\bin;%MAPNIK_SDK%\lib;%PATH%
 SET PROJ_LIB=%MAPNIK_SDK%\share\proj
@@ -125,7 +128,10 @@ SET ICU_DATA=%MAPNIK_SDK%\share\icu
 :: actually install deps + compile node-mapnik
 ECHO building node-mapnik
 CALL npm install --build-from-source --msvs_version=2015 %TOOLSET_ARGS% --loglevel=http
-IF %ERRORLEVEL% NEQ 0 GOTO ERROR
+CALL npm install --build-from-source --msvs_version=2015 %TOOLSET_ARGS% --loglevel=verbose
+::IF %ERRORLEVEL% NEQ 0 GOTO ERROR
+powershell scripts\show_node_lib_runtime.ps1 %USERPROFILE%\.node-gyp
+
 
 FOR /F "tokens=*" %%i in ('CALL node_modules\.bin\node-pre-gyp reveal module_path --silent') DO SET NODEMAPNIK_BINDING_DIR=%%i
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
