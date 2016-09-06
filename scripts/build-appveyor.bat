@@ -32,6 +32,8 @@ SET NODE_URL=https://mapbox.s3.amazonaws.com/node-cpp11/v%nodejs_version%/%ARCHP
 ECHO fetching node.exe^: %NODE_URL%
 powershell Invoke-WebRequest "${env:NODE_URL}" -OutFile node.exe
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
+::put dumpbin on path
+SET PATH=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin;%PATH%
 dumpbin /DIRECTIVES node.exe
 dumpbin /DEPENDENTS node.exe
 
