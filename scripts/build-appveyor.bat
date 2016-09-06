@@ -129,8 +129,7 @@ SET ICU_DATA=%MAPNIK_SDK%\share\icu
 
 :: actually install deps + compile node-mapnik
 ECHO building node-mapnik
-CALL npm install --build-from-source --msvs_version=2015 %TOOLSET_ARGS% --loglevel=http
-CALL npm install --build-from-source --msvs_version=2015 %TOOLSET_ARGS% --loglevel=verbose
+CALL npm install --build-from-source --msvs_version=2015 %TOOLSET_ARGS% --loglevel=verbose --node_shared=true
 ::IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 powershell scripts\show_node_lib_runtime.ps1 %USERPROFILE%\.node-gyp
 
