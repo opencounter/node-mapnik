@@ -30,6 +30,14 @@ GOTO NEXT-ARG
 :ARGS-DONE
 
 
+IF EXIST %USERPROFILE%\AppData\Roaming\npm ECHO deleting %USERPROFILE%\AppData\Roaming\npm && RD /Q /S %USERPROFILE%\AppData\Roaming\npm
+IF %ERRORLEVEL% NEQ 0 GOTO ERROR
+IF EXIST %USERPROFILE%\AppData\Roaming\npm-cache ECHO deleting %USERPROFILE%\AppData\Roaming\npm-cache && RD /Q /S %USERPROFILE%\AppData\Roaming\npm-cache
+IF %ERRORLEVEL% NEQ 0 GOTO ERROR
+IF EXIST %USERPROFILE%\.node-gyp ECHO deleting %USERPROFILE%\.node-gyp && RD /Q /S %USERPROFILE%\.node-gyp
+IF %ERRORLEVEL% NEQ 0 GOTO ERROR
+
+
 IF %USE_LOCAL_MAPNIK_SDK% EQU 0 GOTO START_BUILD
 
 SET LOCAL_MAPNIK_SDK_DIR=%PKGDIR%\mapnik-%MAPNIKBRANCH%\mapnik-gyp\mapnik-sdk

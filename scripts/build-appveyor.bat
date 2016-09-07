@@ -42,7 +42,7 @@ ECHO deleting node.exe programfiles x64
 IF EXIST "%ProgramFiles%\nodejs" IF EXIST "%ProgramFiles%\nodejs\node.exe" ECHO found "%ProgramFiles%\nodejs\node.exe", deleting... && DEL /F "%ProgramFiles%\nodejs\node.exe"
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 ECHO copying node.exe to programfiles x64
-IF EXIST %ProgramFiles%\nodejs ECHO copying to "%ProgramFiles%\nodejs\node.exe" && COPY /Y node.exe "%ProgramFiles%\nodejs\"
+IF EXIST "%ProgramFiles%\nodejs" ECHO copying to "%ProgramFiles%\nodejs\node.exe" && COPY /Y node.exe "%ProgramFiles%\nodejs\"
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 ECHO deleting node.exe programfiles x86
@@ -71,7 +71,7 @@ powershell Set-ExecutionPolicy Unrestricted -Scope CurrentUser -Force
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 CALL npm install -g npm-windows-upgrade
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
-CALL npm-windows-upgrade --version:2.5.9 --no-dns-check --no-prompt
+::CALL npm-windows-upgrade --npm-version 3.10.13 --no-dns-check --no-prompt
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 
@@ -111,7 +111,7 @@ ECHO ===== where npm puts stuff END ============
 :: 1) ensure node-gyp can find it (probably optional)
 :: 2) ensure we have recent enough node-gyp to understand VS 2015 (needed for node v0.10.x certainly)
 ECHO installing node-gyp
-CALL npm install -g node-gyp
+CALL npm install -g node-gyp@3.4.0
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 ECHO ERRORLEVEL^: %ERRORLEVEL%
 
