@@ -77,6 +77,7 @@ IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 CALL npm install -g npm-windows-upgrade
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 ::CALL npm-windows-upgrade --npm-version 3.10.13 --no-dns-check --no-prompt
+CALL npm-windows-upgrade --npm-version 2.15.9 --no-dns-check --no-prompt
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 
