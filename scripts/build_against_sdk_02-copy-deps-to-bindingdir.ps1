@@ -6,9 +6,12 @@ Try{
     Write-Output "from: $env:MAPNIK_SDK"
     Write-Output "to: $env:NODEMAPNIK_BINDING_DIR"
 
+    Write-Output "copy shapeindex.exe"
     Copy-Item $env:MAPNIK_SDK\bin\shapeindex.exe $env:NODEMAPNIK_BINDING_DIR\ -ErrorAction Stop
+    Write-Output "copy mapnik-index.exe"
     Copy-Item $env:MAPNIK_SDK\bin\mapnik-index.exe $env:NODEMAPNIK_BINDING_DIR\ -ErrorAction Stop
 
+    Write-Output "getting file names of dependencies to copy"
     $deps = Get-ChildItem -Path $env:MAPNIK_SDK\lib -Filter *.dll | % { $_.FullName }
 
 	##COPY DEPENDENCIES TO BINDING DIR
