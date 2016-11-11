@@ -47,14 +47,13 @@
         "src/mapnik_featureset.cpp",
         "src/mapnik_expression.cpp",
         "src/mapnik_cairo_surface.cpp",
-        "src/mapnik_vector_tile.cpp",
-        "deps/clipper/clipper.cpp"
+        "src/mapnik_vector_tile.cpp"
       ],
       "msvs_disabled_warnings": [
         4267
       ],
       'include_dirs': [
-        './deps/clipper/',
+        './deps/include/',
         './src',
         "<!(node -e \"require('nan')\")",
         "<!(node -e \"require('protozero')\")",
