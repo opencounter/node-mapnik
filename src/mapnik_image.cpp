@@ -265,14 +265,18 @@ NAN_METHOD(Image::New)
             }
         }
         
-        Image* im = new Image(info[0]->IntegerValue(),
-                              info[1]->IntegerValue(),
-                              type,
-                              initialize,
-                              premultiplied,
-                              painted);
-        im->Wrap(info.This());
-        info.GetReturnValue().Set(info.This());
+        try {
+            Image* im = new Image(info[0]->IntegerValue(),
+                                  info[1]->IntegerValue(),
+                                  type,
+                                  initialize,
+                                  premultiplied,
+                                  painted);
+            im->Wrap(info.This());
+            info.GetReturnValue().Set(info.This());
+        } catch (std::exception const& ex) {
+            Nan::ThrowError(ex.what());
+        }
         return;
     }
     else
@@ -2516,6 +2520,9 @@ void Image::EIO_AfterOpen(uv_work_t* req)
  * @param {Object} [options]
  * @param {number} [options.scale] - scale the image. For example passing `0.5` as scale would render
  * your SVG at 50% the original size.
+ * @param {number} [options.max_size] - the maximum allowed size of the svg dimensions * scale. The default is 2048.
+ * This option can be passed a smaller or larger size in order to control the final size of the image allocated for
+ * rasterizing the SVG.
  * @returns {mapnik.Image} Image object
  * @example
  * var buffer = fs.readFileSync('./path/to/image.svg');
@@ -2534,6 +2541,9 @@ NAN_METHOD(Image::fromSVGBytesSync)
  * @param {Object} [options]
  * @param {number} [options.scale] - scale the image. For example passing `0.5` as scale would render
  * your SVG at 50% the original size.
+ * @param {number} [options.max_size] - the maximum allowed size of the svg dimensions * scale. The default is 2048.
+ * This option can be passed a smaller or larger size in order to control the final size of the image allocated for
+ * rasterizing the SVG.
  * @returns {mapnik.Image} image object
  * @static
  * @memberof Image
@@ -2563,6 +2573,7 @@ v8::Local<v8::Value> Image::_fromSVGSync(bool fromFile, Nan::NAN_METHOD_ARGS_TYP
 
 
     double scale = 1.0;
+    std::uint32_t max_size = 2048;
     if (info.Length() >= 2) 
     {
         if (!info[1]->IsObject()) 
@@ -2585,6 +2596,21 @@ v8::Local<v8::Value> Image::_fromSVGSync(bool fromFile, Nan::NAN_METHOD_ARGS_TYP
                 Nan::ThrowTypeError("'scale' must be a positive non zero number");
                 return scope.Escape(Nan::Undefined());
             }
+        }
+        if (options->Has(Nan::New("max_size").ToLocalChecked()))
+        {
+            v8::Local<v8::Value> opt = options->Get(Nan::New("max_size").ToLocalChecked());
+            if (!opt->IsNumber())
+            {
+                Nan::ThrowTypeError("max_size must be a positive integer");
+                return scope.Escape(Nan::Undefined());
+            }
+            auto max_size_val = opt->IntegerValue();
+            if (max_size_val < 0 || max_size_val > 65535) {
+                Nan::ThrowTypeError("max_size must be a positive integer between 0 and 65535");
+                return scope.Escape(Nan::Undefined());
+            }
+            max_size = static_cast<std::uint32_t>(max_size_val);
         }
     }
 
@@ -2653,6 +2679,14 @@ v8::Local<v8::Value> Image::_fromSVGSync(bool fromFile, Nan::NAN_METHOD_ARGS_TYP
             return scope.Escape(Nan::Undefined());
         }
 
+        if (svg_width > static_cast<int>(max_size) || svg_height > static_cast<int>(max_size))
+        {
+            std::stringstream s;
+            s << "image created from svg must be " << max_size << " pixels or fewer on each side";
+            Nan::ThrowTypeError(s.str().c_str());
+            return scope.Escape(Nan::Undefined());
+        }
+
         mapnik::image_rgba8 im(svg_width, svg_height, true, true);
         agg::rendering_buffer buf(im.bytes(), im.width(), im.height(), im.row_size());
         pixfmt pixf(buf);
@@ -2699,6 +2733,7 @@ typedef struct {
     std::string filename;
     bool error;
     double scale;
+    std::uint32_t max_size;
     std::string error_name;
     Nan::Persistent<v8::Function> cb;
 } svg_file_ptr_baton_t;
@@ -2710,6 +2745,7 @@ typedef struct {
     size_t dataLength;
     bool error;
     double scale;
+    std::uint32_t max_size;
     std::string error_name;
     Nan::Persistent<v8::Object> buffer;
     Nan::Persistent<v8::Function> cb;
@@ -2723,6 +2759,9 @@ typedef struct {
  * @param {Object} [options]
  * @param {number} [options.scale] - scale the image. For example passing `0.5` as scale would render
  * your SVG at 50% the original size.
+ * @param {number} [options.max_size] - the maximum allowed size of the svg dimensions * scale. The default is 2048.
+ * This option can be passed a smaller or larger size in order to control the final size of the image allocated for
+ * rasterizing the SVG.
  * @param {Function} callback
  * @static
  * @memberof Image
@@ -2753,6 +2792,7 @@ NAN_METHOD(Image::fromSVG)
     }
 
     double scale = 1.0;
+    std::uint32_t max_size = 2048;
     if (info.Length() >= 3) 
     {
         if (!info[1]->IsObject()) 
@@ -2776,6 +2816,21 @@ NAN_METHOD(Image::fromSVG)
                 return;
             }
         }
+        if (options->Has(Nan::New("max_size").ToLocalChecked()))
+        {
+            v8::Local<v8::Value> opt = options->Get(Nan::New("max_size").ToLocalChecked());
+            if (!opt->IsNumber())
+            {
+                Nan::ThrowTypeError("max_size must be a positive integer");
+                return;
+            }
+            auto max_size_val = opt->IntegerValue();
+            if (max_size_val < 0 || max_size_val > 65535) {
+                Nan::ThrowTypeError("max_size must be a positive integer between 0 and 65535");
+                return;
+            }
+            max_size = static_cast<std::uint32_t>(max_size_val);
+        }
     }
 
     svg_file_ptr_baton_t *closure = new svg_file_ptr_baton_t();
@@ -2783,6 +2838,7 @@ NAN_METHOD(Image::fromSVG)
     closure->filename = TOSTR(info[0]);
     closure->error = false;
     closure->scale = scale;
+    closure->max_size = max_size;
     closure->cb.Reset(callback.As<v8::Function>());
     uv_queue_work(uv_default_loop(), &closure->request, EIO_FromSVG, (uv_after_work_cb)EIO_AfterFromSVG);
     return;
@@ -2832,6 +2888,15 @@ void Image::EIO_FromSVG(uv_work_t* req)
         {
             closure->error = true;
             closure->error_name = "image created from svg must have a width and height greater then zero";
+            return;
+        }
+
+        if (svg_width > static_cast<int>(closure->max_size) || svg_height > static_cast<int>(closure->max_size))
+        {
+            closure->error = true;
+            std::stringstream s;
+            s << "image created from svg must be " << closure->max_size << " pixels or fewer on each side";
+            closure->error_name = s.str();
             return;
         }
 
@@ -2901,6 +2966,9 @@ void Image::EIO_AfterFromSVG(uv_work_t* req)
  * @param {Object} [options]
  * @param {number} [options.scale] - scale the image. For example passing `0.5` as scale would render
  * your SVG at 50% the original size.
+ * @param {number} [options.max_size] - the maximum allowed size of the svg dimensions * scale. The default is 2048.
+ * This option can be passed a smaller or larger size in order to control the final size of the image allocated for
+ * rasterizing the SVG.
  * @param {Function} callback = `function(err, img)`
  * @example
  * var buffer = fs.readFileSync('./path/to/image.svg');
@@ -2935,6 +3003,7 @@ NAN_METHOD(Image::fromSVGBytes)
     }
 
     double scale = 1.0;
+    std::uint32_t max_size = 2048;
     if (info.Length() >= 3) 
     {
         if (!info[1]->IsObject()) 
@@ -2958,6 +3027,21 @@ NAN_METHOD(Image::fromSVGBytes)
                 return;
             }
         }
+        if (options->Has(Nan::New("max_size").ToLocalChecked()))
+        {
+            v8::Local<v8::Value> opt = options->Get(Nan::New("max_size").ToLocalChecked());
+            if (!opt->IsNumber())
+            {
+                Nan::ThrowTypeError("max_size must be a positive integer");
+                return;
+            }
+            auto max_size_val = opt->IntegerValue();
+            if (max_size_val < 0 || max_size_val > 65535) {
+                Nan::ThrowTypeError("max_size must be a positive integer between 0 and 65535");
+                return;
+            }
+            max_size = static_cast<std::uint32_t>(max_size_val);
+        }
     }
 
     svg_mem_ptr_baton_t *closure = new svg_mem_ptr_baton_t();
@@ -2967,6 +3051,7 @@ NAN_METHOD(Image::fromSVGBytes)
     closure->buffer.Reset(obj.As<v8::Object>());
     closure->data = node::Buffer::Data(obj);
     closure->scale = scale;
+    closure->max_size = max_size;
     closure->dataLength = node::Buffer::Length(obj);
     uv_queue_work(uv_default_loop(), &closure->request, EIO_FromSVGBytes, (uv_after_work_cb)EIO_AfterFromSVGBytes);
     return;
@@ -3018,6 +3103,15 @@ void Image::EIO_FromSVGBytes(uv_work_t* req)
         {
             closure->error = true;
             closure->error_name = "image created from svg must have a width and height greater then zero";
+            return;
+        }
+
+        if (svg_width > static_cast<int>(closure->max_size) || svg_height > static_cast<int>(closure->max_size))
+        {
+            closure->error = true;
+            std::stringstream s;
+            s << "image created from svg must be " << closure->max_size << " pixels or fewer on each side";
+            closure->error_name = s.str();
             return;
         }
 
@@ -3979,6 +4073,7 @@ void Image::EIO_Composite(uv_work_t* req)
     {
         if (closure->filters.size() > 0)
         {
+            // TODO: expose passing custom scale_factor: https://github.com/mapnik/mapnik/commit/b830469d2d574ac575ff24713935378894f8bdc9
             mapnik::filter::filter_visitor<mapnik::image_any> visitor(*closure->im2->this_);
             for (mapnik::filter::filter_type const& filter_tag : closure->filters)
             {

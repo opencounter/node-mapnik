@@ -7,7 +7,7 @@ var assert = require('assert');
 var fs = require('fs');
 
 describe('mapnik.Image SVG', function() {
-    it('should throw with invalid usage', function() {
+    it('should throw with invalid usage', function(done) {
         assert.throws(function() { new mapnik.Image.fromSVGSync(); });
         assert.throws(function() { new mapnik.Image.fromSVG(); });
         assert.throws(function() { new mapnik.Image.fromSVGBytes(); });
@@ -54,6 +54,12 @@ describe('mapnik.Image SVG', function() {
           mapnik.Image.fromSVGBytes(new Buffer('asdf'), { scale: 'foo' }, function(err, res) {});
         }, /'scale' must be a number/);
         assert.throws(function() {
+          mapnik.Image.fromSVGBytes(undefined, { scale: 1 }, function(err, res) {});
+        }, /must provide a buffer argument/);
+        assert.throws(function() {
+          mapnik.Image.fromSVGBytes(null, { scale: 1 }, function(err, res) {});
+        }, /must provide a buffer argument/);
+        assert.throws(function() {
           mapnik.Image.fromSVGSync('./test/data/vector_tile/tile0.expected-svg.svg', { scale: -1 });
         }, /'scale' must be a positive non zero number/);
         assert.throws(function() {
@@ -65,7 +71,75 @@ describe('mapnik.Image SVG', function() {
         assert.throws(function() {
           mapnik.Image.fromSVGSync('./test/data/vector_tile/tile0.corrupt-svg.svg');
         }, /image created from svg must have a width and height greater then zero/);
+        mapnik.Image.fromSVGBytes(new Buffer('a'), { scale: 1 }, function(err, res) {
+            assert.ok(err);
+            assert.ok(err.message.match(/Unable to parse 'a'/));
+            var svgdata = "<svg width='1000000000000' height='1000000000000'><g id='a'><ellipse fill='#FFFFFF' stroke='#000000' stroke-width='4' cx='50' cy='50' rx='25' ry='25'/></g></svg>";
+            var buffer = new Buffer(svgdata);
+            mapnik.Image.fromSVGBytes(buffer, { scale: 1 }, function(err, img) {
+                assert.ok(err);
+                assert.ok(err.message.match(/image created from svg must have a width and height greater then zero/));
+                var svgdata2 = "<svg width='100' height='100'><g id='a'><ellipse fill='#FFFFFF' stroke='#000000' stroke-width='4' cx='50' cy='50' rx='25' ry='25'/></g></svg>";
+                var buffer2 = new Buffer(svgdata2);
+                mapnik.Image.fromSVGBytes(buffer2, { scale: 1000000 }, function(err, img) {
+                    assert.ok(err);
+                    assert.ok(err.message.match(/image created from svg must be 2048 pixels or fewer on each side/));
+                    done();
+                });
+            });
+        });
+
     });
+
+    it('blocks allocating a very large image', function(done) {
+        // 65535 is the max width/height in mapnik
+        var svgdata = "<svg width='65535' height='65535'><g id='a'><ellipse fill='#FFFFFF' stroke='#000000' stroke-width='4' cx='50' cy='50' rx='25' ry='25'/></g></svg>";
+        var buffer = new Buffer(svgdata);
+        mapnik.Image.fromSVGBytes(buffer, function(err, img) {
+            assert.ok(err);
+            assert.ok(err.message.match(/image created from svg must be 2048 pixels or fewer on each side/));
+            done();
+        });
+    });
+
+    it('customized the max image size to block', function(done) {
+        // 65535 is the max width/height in mapnik
+        var svgdata = "<svg width='65535' height='65535'><g id='a'><ellipse fill='#FFFFFF' stroke='#000000' stroke-width='4' cx='50' cy='50' rx='25' ry='25'/></g></svg>";
+        var buffer = new Buffer(svgdata);
+        mapnik.Image.fromSVGBytes(buffer, {max_size:2049}, function(err, img) {
+            assert.ok(err);
+            assert.ok(err.message.match(/image created from svg must be 2049 pixels or fewer on each side/));
+            done();
+        });
+    });
+
+    it('max image size blocks dimension*scale', function(done) {
+        // 65535 is the max width/height in mapnik
+        var svgdata = "<svg width='5000' height='5000'><g id='a'><ellipse fill='#FFFFFF' stroke='#000000' stroke-width='4' cx='50' cy='50' rx='25' ry='25'/></g></svg>";
+        var buffer = new Buffer(svgdata);
+        mapnik.Image.fromSVGBytes(buffer, {scale: 2, max_size:10000-1}, function(err, img) {
+            assert.ok(err);
+            assert.ok(err.message.match(/image created from svg must be 9999 pixels or fewer on each side/));
+            done();
+        });
+    });
+
+    if (process.platform === 'win32') {
+        // skip on windows since appveyor does not have enough memory
+        it.skip('allocates very large image', function() {});
+    } else {
+        it('allocates very large image', function(done) {
+            // 65535 is the max width/height in mapnik
+            var svgdata = "<svg width='5000' height='5000'><g id='a'><ellipse fill='#FFFFFF' stroke='#000000' stroke-width='4' cx='50' cy='50' rx='25' ry='25'/></g></svg>";
+            var buffer = new Buffer(svgdata);
+            mapnik.Image.fromSVGBytes(buffer, {scale: 2, max_size:10000}, function(err, img) {
+                if (err) throw err;
+                assert.equal(img.width(),10000);
+                assert.equal(img.height(),10000);
+                done();
+            });
+        });
+    }
 
     it('should err with async file w/o width or height', function(done) {
       mapnik.Image.fromSVG('./test/data/vector_tile/tile0.corrupt-svg.svg', function(err, svg) {
