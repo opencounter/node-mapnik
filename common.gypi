@@ -4,7 +4,7 @@
     'msbuild_toolset':'v140',
     'msvs_disabled_warnings': [ 4068,4244,4005,4506,4345,4804,4805,4661 ],
     'cflags_cc' : [
-      '-std=c++14',
+      '-std=c++11',
     ],
     'configurations': {
       'Debug': {
@@ -15,7 +15,6 @@
           '-O3',
           '-Os',
           '-DNDEBUG',
-          '-std=c++11'
         ],
         'xcode_settings': {
           'OTHER_CPLUSPLUSFLAGS!': [
@@ -41,9 +40,6 @@
       'Release': {
         'defines': [
           'NDEBUG'
-        ],
-        'cflags_cc!': [
-          '-std=c++11'
         ],
         'xcode_settings': {
           'OTHER_CPLUSPLUSFLAGS!': [

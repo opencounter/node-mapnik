@@ -95,7 +95,7 @@
             'cflags_cc!': ['-fno-rtti', '-fno-exceptions'],
             'cflags_cc' : [
               '<!@(mapnik-config --cflags)',
-              '-std=c++14'
+              '-std=c++11'
             ],
             'libraries':[
               '<!@(mapnik-config --libs)',
@@ -105,11 +105,11 @@
             'xcode_settings': {
               'OTHER_CPLUSPLUSFLAGS':[
                 '<!@(mapnik-config --cflags)',
-                '-std=c++14'
+                '-std=c++11'
               ],
               'OTHER_CFLAGS':[
                 '<!@(mapnik-config --cflags)',
-                '-std=c++14'
+                '-std=c++11'
               ],
               'OTHER_LDFLAGS':[
                 '-Wl,-bind_at_load'
@@ -118,7 +118,7 @@
               'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
               'MACOSX_DEPLOYMENT_TARGET':'10.8',
               'CLANG_CXX_LIBRARY': 'libc++',
-              'CLANG_CXX_LANGUAGE_STANDARD':'c++14',
+              'CLANG_CXX_LANGUAGE_STANDARD':'c++11',
               'GCC_VERSION': 'com.apple.compilers.llvm.clang.1_0'
             }
           },
