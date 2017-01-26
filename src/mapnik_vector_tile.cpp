@@ -23,7 +23,7 @@
 // mapnik
 #include <mapnik/agg_renderer.hpp>      // for agg_renderer
 #include <mapnik/datasource_cache.hpp>
-#include <mapnik/box2d.hpp>
+#include <mapnik/geometry/box2d.hpp>
 #include <mapnik/feature.hpp>
 #include <mapnik/featureset.hpp>
 #include <mapnik/feature_kv_iterator.hpp>
