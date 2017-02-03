@@ -63,7 +63,7 @@ if [[ ! `which node` ]]; then
 fi
 
 export LDFLAGS=${LDFLAGS:-""}
-export CXXFLAGS=${CXXFLAGS:-""}
+export CXXFLAGS="${CXXFLAGS:-""} -D_GLIBCXX_USE_CXX11_ABI=0"
 
 if [[ $UNAME == 'Linux' ]]; then
     export LDFLAGS='-Wl,-z,origin -Wl,-rpath=\$$ORIGIN '${LDFLAGS}
@@ -79,7 +79,7 @@ npm install node-pre-gyp
 MODULE_PATH=$(node-pre-gyp reveal module_path ${ARGS})
 # note: dangerous!
 rm -rf ${MODULE_PATH}
-npm install --build-from-source ${ARGS} --clang=1
+node-pre-gyp install --build-from-source --clang=1
 
 # copy mapnik-index
 cp ${MAPNIK_SDK}/bin/mapnik-index ${MODULE_PATH}
