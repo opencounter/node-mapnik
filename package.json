@@ -47,9 +47,9 @@
     "mapnik-shapeindex.js": "./bin/mapnik-shapeindex.js"
   },
   "scripts": {
-    "prepublish": "npm ls",
     "test": "jshint bin lib/index.js lib/mapnik.js && mocha -R spec --timeout 50000",
-    "install": "scripts/build_against_sdk.sh",
+    "preinstall":"npm install node-pre-gyp",
+    "install": "echo `pwd` && ls && ./build_against_sdk.sh",
     "docs": "documentation build src/*.cpp src/mapnik_plugins.hpp --polyglot -o documentation -f html --github --name Mapnik"
   },
   "devDependencies": {
